@@ -1,3 +1,8 @@
+## Current State
+Parrses, expands, outputs correctly including splits
+
+Need to impliment exclude function
+
 ## Requirements
 Take input file with CIDR or ranges  
 Take exclude file with CIDR, ranges, or IPs  
@@ -7,9 +12,7 @@ Option to split output file into specified number of equal files
 ##### Acceptable CIDR\Rage Formats Include:
 - 192.168.3.0/24
 - 192.168.3.0-255
-- 192.168.3.4,6,8,12,34-38
-- 192.168.3-12.0-255
----
+- 192.168.3.0-192.168.4.155
 ### Options:
 | Command  | Description |
 |--|--|
