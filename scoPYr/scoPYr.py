@@ -21,38 +21,65 @@ regexPatterns = {}
 regexPatterns['cidr'] = r'^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$'
 regexPatterns['lastOctet'] = r'^(\d{1,3}\.){3}\d{1,3}-\d{1,3}$'
 regexPatterns['allOctets'] = r'^(\d{1,3}\.){3}(\d{1,3})-(\d{1,3}\.){3}\d{1,3}$'
+regexPatterns['single'] = r'^(\d{1,3}\.){3}(\d{1,3})$'
 
 
 outputFile = open(args.outputFileVar, 'a')
 inputFile = open(args.inputFileVar, 'r')
-if args.outputFileVar: excludeFile = open(args.outputFileVar, 'r')
+if args.excludeFileVar: excludeFile = open(args.excludeFileVar, 'r')
+
+
+def expand(ipRange):
+    scope = []
+    if re.search(regexPatterns['cidr'], ipRange):
+        net = ipaddress.ip_network(ipRange)
+        for adder in net:
+            scope.append(str(ipaddress.IPv4Address(adder)))
+    elif re.search(regexPatterns['lastOctet'], ipRange):
+        adder = ipRange.split('.')
+        startEnd = adder[3].split('-')
+        start = int(startEnd[0])
+        end = int(startEnd[1])
+        for i in range(start, end + 1):
+            scope.append(adder[0] + '.' + adder[1] + '.' + adder[2] + '.' + str(i))
+    elif re.search(regexPatterns['allOctets'], ipRange):
+        startEnd = ipRange.split('-')
+        start_ip = ipaddress.IPv4Address(startEnd[0])
+        end_ip = ipaddress.IPv4Address(startEnd[1])
+        for ip_int in range(int(start_ip), int(end_ip) + 1):
+            scope.append(str(ipaddress.IPv4Address(ip_int)))
+    elif re.search(regexPatterns['single'], ipRange):
+        scope.append(ipRange)
+    else:
+        print("Can not parse: " + ipRange)
+        return []
+    return scope
+
+
+excludeList = []
+try:
+    if excludeFile:
+        excludeList = []
+        for case in excludeFile:
+            case = case.rstrip("\n")
+            for i in expand(case):
+                excludeList.append(i)
+
+        excludeFile.close()
+except:
+    print("Not using an exclude file")
 
 
 for case in inputFile:
     case = case.rstrip("\n")
-    if re.search(regexPatterns['cidr'], case):
-        print("CIDR: " + case)
-        net = ipaddress.ip_network(case)
-        for adder in net:
-            print(adder, file=outputFile)
-    elif re.search(regexPatterns['lastOctet'], case):
-        print("lastOctet: " + case)
-        adder = case.split('.')
-        startEnd = adder[3].split('-')
-        for i in range(int(startEnd[0]), int(startEnd[1]) + 1):
-            print(adder[0] + '.' + adder[1] + '.' + adder[2] + '.' + str(i), file=outputFile)
-    elif re.search(regexPatterns['allOctets'], case):
-        startEnd = case.split('-')
-        start_ip = ipaddress.IPv4Address(startEnd[0])
-        end_ip = ipaddress.IPv4Address(startEnd[1])
-        for ip_int in range(int(start_ip), int(end_ip) + 1):
-            print(ipaddress.IPv4Address(ip_int), file=outputFile)
-    else:
-        print("Unmatched: " + case)
+    for i in expand(case):
+        if i not in excludeList:
+           print(i, file=outputFile)
+    
 
 outputFile.close()
 inputFile.close()
-if excludeFile: excludeFile.close()
+
 
 if args.splitCount > 1:
     allIps = deque([])

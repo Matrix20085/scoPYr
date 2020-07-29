@@ -1,7 +1,6 @@
 ## Current State
-Parrses, expands, outputs correctly including splits
+Parrses, expands, excludes, outputs correctly including splits
 
-Need to impliment exclude function
 
 ## Requirements
 Take input file with CIDR or ranges  
